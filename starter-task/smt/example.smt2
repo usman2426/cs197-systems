@@ -1,0 +1,12 @@
+(set-logic ALL)
+(declare-const x Int)
+(declare-const y Int)
+(declare-const z Int)
+(assert (= (+ (* x x) (* y y) (* z z)) 33))
+(assert (> x y))
+(assert (> y z))
+(check-sat)
+(get-model)
+
+(assert (< x z))
+(check-sat)

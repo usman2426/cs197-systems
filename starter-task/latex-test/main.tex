@@ -1,0 +1,36 @@
+\documentclass{article}
+
+% ensure a couple packages are available...
+\usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{pgf}
+\usepackage{natbib}
+\usepackage{graphicx}
+
+\bibliographystyle{unsrtnat}
+
+\title{Hello, World!}
+\author{Matthew Sotoudeh}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    This is an abstract\ldots
+\end{abstract}
+
+Hello, this is a test \LaTeX{} document. Have you read~\citet{bmc}? This PDF
+should look something like:
+
+\begin{center}
+    \frame{
+        \includegraphics[scale=0.5,trim={4cm 3cm 4cm 5cm},clip]{recursive.pdf}
+    }
+\end{center}
+
+\bibliography{main}
+
+\end{document}
