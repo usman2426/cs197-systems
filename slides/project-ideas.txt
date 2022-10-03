@@ -1,3 +1,7 @@
+Note these are very broad descriptions, I assume they won't make a ton of sense
+except maybe some keywords/basic problem domain. If you find any of them
+interesting and want to learn more, come talk with me !
+
 ---- "Official" project ideas
 
 1. SAT solver proof explorer: design a tool to help humans read and understand
