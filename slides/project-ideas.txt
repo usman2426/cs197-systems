@@ -1,0 +1,88 @@
+---- "Official" project ideas
+
+1. SAT solver proof explorer: design a tool to help humans read and understand
+   the math proofs that computerized theorem provers spit out.
+
+   Good for: want to understand the logical proof format/system used by the
+   solvers. Interested in a more open-ended problem where you're really trying
+   to "understand what this computer is doing," kind of like a foreign
+   language. Could also involve a lot of collaborative/HCI-style design, like
+   how can multiple people work together on understanding this proof?
+
+2. Automatically identify similarities between multiple SAT/SMT
+   problems/inputs, and automatically determine the best way to communicate
+   this to the solver to speed up its solving of multiple similar problems in a
+   row.
+
+   Good for: want to get more experience with the input/output of these
+   solvers. Opportunities for programming language design/analysis (to specify
+   infinite sets of similar problems instead of just a few).
+
+3. Evaluating effectiveness of symbolic execution engine optimizations.
+
+   Good for: like reading other people's code and/or like "biology-style"
+   experiments (tweak something and measure effect). If really want to, could
+   involve writing your own symbolic execution engine (but wouldn't necessarily
+   recommend for this class).
+
+4. Use SMT to break network protocols. I.e., given a description of a network
+   protocol, try to find a "legal" strategy that one of the participants can
+   use to get unfair control, e.g., that participant can monopolize all the
+   bandwidth.
+
+   Good for: interested in actually using SMT solvers in the future/formal
+   verification of systems.
+
+---- "Unofficial" project ideas, more systems-hacking-y
+
+1. Automated/brute force search for the fastest program (arithmetic circuit)
+   that computes a certain polynomial. Has applications to some open problems
+   in theoretical computer science.
+
+   Good for: performance hacking, distributed programming
+
+2. Implement a well-optimized inclusion/exclusion SAT solver and try different
+   optimizations to see how close you can get it to a standard CDCL one.
+   Identify benchmarks in the SAT-COMP that work abnormally well with it.
+
+   Good for: performance hacking. If you really liked the Chaff paper, this
+   would basically be the same thing except optimizing a totally different
+   algorithm/approach.
+
+3. Take a running process, fork it, and then symbolically execute it to try to
+   identify keyboard shortcuts that do interesting things. E.g., I want to find
+   the keyboard shortcut for "save file", but my program doesn't have a nice
+   listing of keyboard shortcuts. So I press a "record" button, save the file
+   manually, then ask this tool to figure how to do that action with only the
+   keyboard (or the shortest sequence of inputs that cause the action, etc.).
+
+   Good for: Linux API hacking, want to write a symbolic execution engine, want
+   a really cool demo (but *lots* of code, probably !!!)
+
+4. Lots of program analysis tools work on LLVM IR, i.e., you need to be able to
+   build the project first. But that's not always super easy, e.g., random
+   snippets on S/O probably don't have all the #includes or call some functions
+   not defined in the file. This project would take a file, run it through GCC,
+   see what errors GCC gives, try to fix them (e.g., including stdlib or
+   declaring a new struct type), and then repeat.
+
+   Good for: like parsing, program analysis tools, etc.
+
+5. Reverse taint analysis: suppose running program "foo" creates a huge output
+   file "out.txt". I want to be able to point to a particular line in "out.txt"
+   and ask this tool to tell me exactly which line in the source code for "foo"
+   made that output.
+
+   Good for: Linux API hacking, ptrace usage, debugging symbols, etc.
+
+6. Suppose I (e.g., military) want to have a super secret private network
+   totally walled off from the public internet. That's super secure, but not
+   very practical; what if I want to connect from vacation? Can do a VPN, but
+   then my laptop has to connect to the public internet first and then its
+   network stack can be hacked. Solution: a tiny, super solid, super secure
+   raspberry pi OS that just handles tunneling a connection to my private
+   network. Only the r/pi ever connects to the public internet, never the
+   laptop. But that's OK bc the r/pi's OS is tiny (maybe 1k LOC?), super well
+   tested, and super easy to read/check is mostly bug-free.
+
+   Good for: embedded programming, if you want to take 140e
