@@ -1,0 +1,15 @@
+-------------
+Initial Tasks
+-------------
+
+- Read https://dl.acm.org/doi/pdf/10.1145/3452296.3472912
+
+- Pick a simple protocol (AIMD?) and try to match their results with Z3.
+
+- Try different encodings. Particularly, try the infinite one in Vampire and an
+  infinite one for LTL solvers.
+
+- Think about how we might extend this. Possible directions: try to automate
+  proofs for infinite timesteps, handle multiple competing flows, use symbolic
+  abstraction to characterize 'good' initial states, or try to verify actual C
+  implementations.

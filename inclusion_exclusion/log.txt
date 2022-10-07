@@ -1,0 +1,15 @@
+-------------
+Initial Tasks
+-------------
+
+- Read https://arxiv.org/abs/1712.06587
+- Implement basic inclusion/exclusion solving in Python just to check
+  correctness
+- Check correctness of Python implementation against SAT-COMP benchmarks:
+  http://www.satcompetition.org/
+- Implement C version (start with parsing DIMACS, then enumerating
+  k-combinations)
+- Simultaneously, fork the Python version to estimate (think random!)
+  performance of the incl/excl solver. Run this on SAT-COMP benchmarks,
+  compared to miniSAT, and try to find some that we may have an advantage on.
+- Optimize!

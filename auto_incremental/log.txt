@@ -1,0 +1,16 @@
+-------------
+Initial Tasks
+-------------
+
+- Read
+  https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.4.8161&rep=rep1&type=pdf
+
+- Download SAT-COMP benchmarks and identify possible candidates
+
+- Parse the DIMACS, look for identical/isomorphic clause sets
+
+- Call the incremental mode of the solver using those isomorphic clause sets,
+  record and compare number of decisions (or some other metric)
+
+- Decide how to build off here: infinite problem sets? more processing of the
+  formulas?

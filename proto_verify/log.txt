@@ -1,0 +1,14 @@
+-------------
+Initial Tasks
+-------------
+
+- Read https://theory.stanford.edu/~aiken/publications/papers/asplos13.pdf
+
+- Python implementation of core technique (build depth-1, depth-2, ... circuits
+  --- good idea David !)
+
+- Think about how to speed things up. Parallel/distributed random search? Any
+  good heuristics? Carry around evaluation on a point instead of whole circuit?
+  Use SMT solvers?
+
+- C/etc. implementation, and/or with optimizations
