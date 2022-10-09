@@ -4,6 +4,9 @@ Some papers
 AFAIK this is the earliest paper proposing this approach:
 https://doi.org/10.1016/B978-0-12-386870-1.50019-8
 
+This proposes a different approach still using incl/excl:
+https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=7426082
+
 -------------
 Initial Tasks
 -------------
