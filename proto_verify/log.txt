@@ -1,3 +1,18 @@
+---------------
+Extension Ideas
+---------------
+incl from below:
+1. Synthesis, or at least solving for "best" param in a param'd protocol
+2. Automate proofs for infinite timesteps
+3. Handle multiple competing flows
+4. Use symbolic abstraction to characterize 'good' initial states
+5. Try to verify actual C implementations
+
+#1 and #4 seem like good fits; can take the same encoding they use and just
+throw in an optimization loop.
+
+#2 is good to experiment with different encodings.
+
 -------------
 Initial Tasks
 -------------
