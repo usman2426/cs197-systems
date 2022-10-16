@@ -1,0 +1,15 @@
+---- Next steps
+- For now, focus on the parameter-solving bit flip
+
+---- Understanding the group's bit flip
+- "noise levels in real life networks"
+- "simulations + formal logic for end-to-end verification of both"
+
+Eventual goal:
+- Parameter solving
+- Simulations for noise & such like in #6 but more general
+- Cross-verifying algorithm & implementation
+- Generating implementation
+- Trying different encodings
+
+---- Related work feedback
