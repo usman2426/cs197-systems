@@ -40,7 +40,7 @@ def merge(clause1, clause2):
 
 def countSolns(clause, numLiterals):
     power = numLiterals - len(clause)
-    return 2^power
+    return 2**power
 
 def calculateSummation(previousGeneration, lookupMerges, numLiterals):
 	summation = 0
