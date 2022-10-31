@@ -20,7 +20,7 @@
 
 use std::{
     collections::{HashMap, VecDeque},
-    fs,
+    fs::{self, DirEntry},
     time::Instant,
 };
 
@@ -28,7 +28,7 @@ use load::{parse_dimacs, Clause, DNF};
 
 mod load;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum SolutionResult {
     Inconclusive,
     Satisfiable,
@@ -88,7 +88,7 @@ fn solve(dnf: &DNF, max_size: usize) -> (SolutionResult, usize, f64) {
                             sum += current_term
                         };
                         // add this set of clauses and the merge result in the queue to be explored further
-                        queue.push_back((new_set.clone(), clause));
+                        queue.push_back((new_set, clause));
                     }
                     // if incompatible, we do not wish to further explore this and thus do not insert into queue
                     // HOWEVER, it may be wise to create a cache structure to allow storing INVALID results
@@ -127,23 +127,38 @@ fn solve(dnf: &DNF, max_size: usize) -> (SolutionResult, usize, f64) {
 }
 
 fn main() {
-    let check = |dir: &str, expected_result: SolutionResult| {
-        for file in fs::read_dir(dir).unwrap().map(|entry| entry.unwrap()) {
-            let dnf = parse_dimacs(&{
-                let file = &file.path();
-                fs::read_to_string(file)
-                    .expect(&format!("Failed to open file {}", file.to_string_lossy()))
-            })
-            .expect("invalid DIMACS in sample input")
-            .1;
-            let start = Instant::now();
-            let (result, _, _) = solve(&dnf, 5);
-            let duration = start.elapsed();
-            assert!(result == expected_result);
+    let check_file = |file: DirEntry, expected_result: SolutionResult| {
+        // filter
+        // if !file.file_name().to_string_lossy().contains("testing.cnf") {
+        // return;
+        // }
+        println!("===== {} =====", file.file_name().to_string_lossy());
+        let dnf = parse_dimacs(&{
+            let file = &file.path();
+            fs::read_to_string(file)
+                .expect(&format!("Failed to open file {}", file.to_string_lossy()))
+        })
+        .expect("invalid DIMACS in sample input")
+        .1;
+        let start = Instant::now();
+        let (result, _, _) = solve(&dnf, 4);
+        let duration = start.elapsed();
+        if result != expected_result {
+            eprintln!(
+                "Expected {:?} for {}, but got {:?}",
+                expected_result,
+                file.file_name().to_string_lossy(),
+                result
+            );
+        }
 
-            println!("{:?} for {} clauses", duration, dnf.len());
+        println!("{:?} for {} clauses", duration, dnf.len());
+    };
+    let check_dir = |dir: &str, expected_result: SolutionResult| {
+        for file in fs::read_dir(dir).unwrap().map(|entry| entry.unwrap()) {
+            check_file(file, expected_result)
         }
     };
-    check("samples/sat", SolutionResult::Satisfiable);
-    check("samples/unsat", SolutionResult::Unsatisfiable);
+    check_dir("samples/sat", SolutionResult::Satisfiable);
+    check_dir("samples/unsat", SolutionResult::Unsatisfiable);
 }
