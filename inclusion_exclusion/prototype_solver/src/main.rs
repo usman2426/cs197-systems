@@ -108,13 +108,13 @@ fn solve(dnf: &DNF, max_size: usize) -> (SolutionResult, usize, f64) {
         // by nature of the queue logic, the sizes must be always nondecreasing
         // therefore, once we "level up", we may analyze the sum, as it now accounts for the entire previous level of sizes
         if set.len() > max_seen_size {
+            max_seen_size = set.len();
             // check the sum and see if it is (a lower bound and above 2^N) or (an upper bound and below 2^n)
-            if max_seen_size % 2 == 0 && sum >= f64::powi(2.0, total_vars) {
+            if max_seen_size % 2 == 0 && sum == f64::powi(2.0, total_vars) {
                 return (SolutionResult::Unsatisfiable, max_seen_size, sum);
             } else if max_seen_size % 2 == 1 && sum < f64::powi(2.0, total_vars) {
                 return (SolutionResult::Satisfiable, max_seen_size, sum);
             }
-            max_seen_size = set.len();
         }
     }
     // the last "level up" is not caught inside the loop
