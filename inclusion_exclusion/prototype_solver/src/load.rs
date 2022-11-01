@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Not};
+use std::ops::Not;
 
 use nom::{
     branch::alt,
@@ -14,7 +14,8 @@ use nom::{
 };
 
 pub type DNF = Vec<Clause>;
-pub type Clause = HashMap<u32, Sign>;
+/// must always be sorted
+pub type Clause = Vec<(u32, Sign)>;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Sign {
@@ -80,5 +81,12 @@ pub fn parse_dimacs(file_contents: &str) -> IResult<&str, DNF> {
     let (input, _num_clauses) = terminated(digit1, newline)(input)?;
     let (input, _) = front_comments(input)?;
     // the clauses in the input are in cnf form. therefore, we negate every value while parsing to obtain the dnf
-    many1(terminated(clause, opt(front_comments)))(input)
+    let mut out = many1(terminated(clause, opt(front_comments)))(input);
+    // sort the clauses
+    if let Ok(ref mut out) = out {
+        out.1
+            .iter_mut()
+            .for_each(|list| list.sort_unstable_by_key(|e| e.0))
+    };
+    out
 }
