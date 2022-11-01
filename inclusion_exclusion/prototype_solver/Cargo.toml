@@ -7,3 +7,11 @@ edition = "2021"
 
 [dependencies]
 nom = "7.1.1"
+rand = "0.8.5"
+
+[dev-dependencies]
+criterion = { version = "0.4.0", features = ["html_reports"] }
+
+[[bench]]
+name = "n_taut"
+harness = false
