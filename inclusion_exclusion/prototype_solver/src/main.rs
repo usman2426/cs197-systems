@@ -23,7 +23,7 @@ use std::{
     time::Instant,
 };
 
-use inc_exc::{load::parse_dimacs, solve, SolutionResult};
+use inc_exc::{clauses::vec::VecClause, load::parse_dimacs, solve, SolutionResult};
 
 fn main() {
     let check_file = |file: DirEntry, expected_result: SolutionResult| {
@@ -32,7 +32,7 @@ fn main() {
         //     return;
         // }
         println!("===== {} =====", file.file_name().to_string_lossy());
-        let dnf = parse_dimacs(&{
+        let (dnf, num_vars, num_clauses) = parse_dimacs::<VecClause>(&{
             let file = &file.path();
             fs::read_to_string(file)
                 .expect(&format!("Failed to open file {}", file.to_string_lossy()))
@@ -41,7 +41,7 @@ fn main() {
         .1;
 
         let start = Instant::now();
-        let (result, _, _) = solve(&dnf, 4);
+        let (result, _, _) = solve(&dnf, num_vars, num_clauses, 4);
         let duration = start.elapsed();
         if result != expected_result {
             eprintln!(
@@ -52,13 +52,13 @@ fn main() {
             );
         }
 
-        println!("{:?} for {} clauses", duration, dnf.len());
+        println!("{:?} for {} clauses", duration, num_clauses);
     };
     let check_dir = |dir: &str, expected_result: SolutionResult| {
         for file in fs::read_dir(dir).unwrap().map(|entry| entry.unwrap()) {
             check_file(file, expected_result)
         }
     };
-    check_dir("samples/sat", SolutionResult::Satisfiable);
-    check_dir("samples/unsat", SolutionResult::Unsatisfiable);
+    check_dir("correctness_samples/sat", SolutionResult::Satisfiable);
+    check_dir("correctness_samples/unsat", SolutionResult::Unsatisfiable);
 }

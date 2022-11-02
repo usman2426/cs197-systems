@@ -1,8 +1,9 @@
 use std::collections::VecDeque;
 
-use load::{Clause, Sign, DNF};
-
+pub mod clauses;
 pub mod load;
+
+use load::{Sign, DNF};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum SolutionResult {
@@ -11,60 +12,34 @@ pub enum SolutionResult {
     Unsatisfiable,
 }
 
-enum Merge {
-    Set(Clause),
+pub trait Merge
+where
+    Self: Sized + Clone + Default,
+{
+    fn merge(a: Self, b: &Self) -> MergeResult<Self>;
+    fn from_vec(vec: Vec<Vec<(u32, Sign)>>) -> DNF<Self>;
+    fn len(&self) -> usize;
+}
+
+pub enum MergeResult<T: Merge> {
+    Set(T),
     Incompatible,
 }
 
-fn merge(a: Clause, b: &Clause) -> Merge {
-    let mut a = a.iter();
-    let mut b = b.iter();
-
-    let mut index_a = a.next();
-    let mut index_b = b.next();
-
-    let mut output = Vec::with_capacity(a.len() + b.len());
-
-    loop {
-        match (index_a, index_b) {
-            (Some(&a_r), Some(&b_r)) => {
-                if a_r.0 == b_r.0 && a_r.1 != b_r.1 {
-                    return Merge::Incompatible;
-                }
-                if a_r.0 < b_r.0 {
-                    output.push(a_r);
-                    index_a = a.next();
-                } else {
-                    output.push(b_r);
-                    index_b = b.next();
-                }
-            }
-            (Some(&a_r), None) => {
-                output.push(a_r);
-                index_a = a.next();
-            }
-            (None, Some(&b_r)) => {
-                output.push(b_r);
-                index_b = b.next();
-            }
-            _ => return Merge::Set(output),
-        }
-    }
-}
-
 // max_size is the maximum allowed size for subset generation
-pub fn solve(dnf: &DNF, max_size: usize) -> (SolutionResult, usize, f64) {
+pub fn solve<Clause: Merge>(
+    dnf: &DNF<Clause>,
+    num_vars: u32,
+    num_clauses: u32,
+    max_size: usize,
+) -> (SolutionResult, usize, f64) {
     // 0th generation. no combination of indices yet
-    let mut queue: VecDeque<(Vec<usize>, Clause)> = VecDeque::from(vec![(vec![], vec![])]);
+    let mut queue: VecDeque<(Vec<usize>, Clause)> =
+        VecDeque::from(vec![(vec![], Clause::default())]);
     // critical variable for testing for completion.
     let mut sum: f64 = 0.0;
     // total number of variables in all the clauses. (alternatively, parse from the dimacs input)
-    let total_vars = dnf
-        .iter()
-        .map(|h| h.iter())
-        .flat_map(|i| i)
-        .collect::<Vec<&(u32, Sign)>>()
-        .len() as i32;
+    let total_vars = num_vars as i32;
     // the queue can contain future and current generations (generations by size of subset)
     // therefore, we use max_seen_size to determine when we have finished one generation
     // and will start processing the next generation
@@ -75,11 +50,11 @@ pub fn solve(dnf: &DNF, max_size: usize) -> (SolutionResult, usize, f64) {
             // this new index must be greater than the last index in the set
             // because our set is an ordered list of increasing indices, this guarantees
             // every new set we create will be unique
-            for new_index in (set.last().map(|&e| e + 1).unwrap_or(0))..(dnf.len()) {
+            for new_index in (set.last().map(|&e| e + 1).unwrap_or(0))..(num_clauses as usize) {
                 // merge the cached set with the clause at the new_index
-                match merge(merge_result.clone(), &dnf[new_index]) {
+                match Clause::merge(merge_result.clone(), &dnf[new_index]) {
                     // if the merge succeeds,
-                    Merge::Set(clause) => {
+                    MergeResult::Set(clause) => {
                         let mut new_set = set.clone();
                         new_set.push(new_index);
                         // add to sum the size of the solution space for this merged set
@@ -98,7 +73,7 @@ pub fn solve(dnf: &DNF, max_size: usize) -> (SolutionResult, usize, f64) {
                     // 1,3 is not an obvious direct ancestor of 1,2,3. thus, this search would necessitate linear probing of
                     // every possible indirect ancestor in the previous generation: 2,3; 1,3; 1,2
                     // thus, we do not implement it here
-                    Merge::Incompatible => {}
+                    MergeResult::Incompatible => {}
                 }
             }
         } else {
