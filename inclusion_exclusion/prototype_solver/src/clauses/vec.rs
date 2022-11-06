@@ -29,9 +29,18 @@ impl Merge for VecClause {
         loop {
             match (index_a, index_b) {
                 (Some(&a_r), Some(&b_r)) => {
-                    // same literal, differing signs
-                    if a_r.0 == b_r.0 && a_r.1 != b_r.1 {
-                        return MergeResult::Incompatible;
+                    // same literal
+                    if a_r.0 == b_r.0 {
+                        // differing signs
+                        if a_r.1 != b_r.1 {
+                            return MergeResult::Incompatible;
+                        } else {
+                            // same sign, advance both and put one into output
+                            output.push(a_r);
+                            index_a = a.next();
+                            index_b = b.next();
+                            continue;
+                        }
                     }
                     if a_r.0 < b_r.0 {
                         output.push(a_r);
