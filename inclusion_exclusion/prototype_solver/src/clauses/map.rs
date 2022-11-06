@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    load::{Sign, DNF},
+    dnf::{Sign, DNF},
     Merge, MergeResult,
 };
 

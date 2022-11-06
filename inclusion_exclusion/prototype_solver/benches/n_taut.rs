@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use inc_exc::{
     clauses::{map::MapClause, vec::VecClause},
-    load::{Sign, DNF},
+    dnf::{Sign, DNF},
     solve, Merge,
 };
 use rand::{thread_rng, Rng};
@@ -80,7 +80,9 @@ fn vary_var_number(c: &mut Criterion) {
 
 fn vary_clause_number(c: &mut Criterion) {
     let mut group = c.benchmark_group("Varying clause number");
-    for num_clauses in (MIN_CLAUSES..MAX_CLAUSES).step_by(((MAX_CLAUSES - MIN_CLAUSES) / 20) as usize) {
+    for num_clauses in
+        (MIN_CLAUSES..MAX_CLAUSES).step_by(((MAX_CLAUSES - MIN_CLAUSES) / 20) as usize)
+    {
         group.throughput(Throughput::Elements(num_clauses as u64));
         group.bench_with_input(
             BenchmarkId::new("VecClause", format!("{NUM_VARS}, {num_clauses}, 3")),

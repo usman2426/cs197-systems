@@ -23,7 +23,8 @@ use std::{
     time::Instant,
 };
 
-use inc_exc::{clauses::vec::VecClause, load::parse_dimacs, solve, SolutionResult};
+use inc_exc::SolutionResult;
+use inc_exc::{clauses::vec::VecClause, load::parse_dimacs, solve};
 
 fn main() {
     let check_file = |file: DirEntry, expected_result: SolutionResult| {
@@ -41,7 +42,7 @@ fn main() {
         .1;
 
         let start = Instant::now();
-        let (result, _, _) = solve(&dnf, num_vars, num_clauses, 4);
+        let (result, _, _) = solve(&dnf, num_vars, num_clauses, 3);
         let duration = start.elapsed();
         if result != expected_result {
             eprintln!(

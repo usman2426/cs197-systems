@@ -2,7 +2,7 @@
 //! Requires all clauses to be initially sorted and therefore has linear time for merging
 
 use crate::{
-    load::{Sign, DNF},
+    dnf::{Sign, DNF},
     Merge, MergeResult,
 };
 
