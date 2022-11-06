@@ -1,4 +1,5 @@
 //! Vector implementation of clause storage and merging
+//! Requires all clauses to be initially sorted and therefore has linear time for merging
 
 use crate::{
     load::{Sign, DNF},
@@ -28,6 +29,7 @@ impl Merge for VecClause {
         loop {
             match (index_a, index_b) {
                 (Some(&a_r), Some(&b_r)) => {
+                    // same literal, differing signs
                     if a_r.0 == b_r.0 && a_r.1 != b_r.1 {
                         return MergeResult::Incompatible;
                     }

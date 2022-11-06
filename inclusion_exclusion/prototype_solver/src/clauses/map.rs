@@ -1,4 +1,5 @@
-//! Vector implementation of clause storage and merging
+//! HashMap implementation of clause storage and merging
+//! linear time merging
 
 use std::collections::HashMap;
 
