@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 uint64_t *WORDS = NULL;
 uint64_t N_WORDS = 0;
@@ -8,11 +9,13 @@ uint64_t N_WORDS = 0;
 int add_pow_2(unsigned power) {
     unsigned word_idx = power / 64;
     if ((word_idx + 1) > N_WORDS) {
+        uint64_t old_n_words = N_WORDS;
         N_WORDS = 2 * (word_idx + 1);
         WORDS = realloc(WORDS, N_WORDS * sizeof(WORDS[0]));
+        memset(WORDS + old_n_words, 0, (N_WORDS - old_n_words) * sizeof(WORDS[0]));
     } else if (N_WORDS && WORDS[N_WORDS - 1]) {
-        N_WORDS++;
-        WORDS = realloc(WORDS, N_WORDS * sizeof(WORDS[0]));
+        WORDS = realloc(WORDS, (++N_WORDS) * sizeof(WORDS[0]));
+        WORDS[N_WORDS - 1] = 0;
     }
 
     // https://stackoverflow.com/questions/46701364/how-to-access-the-carry-flag-while-adding-two-64-bit-numbers-using-asm-in-c
