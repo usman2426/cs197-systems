@@ -1,29 +1,30 @@
 use std::collections::VecDeque;
 
 pub mod clauses;
+pub mod counters;
 pub mod dnf;
 pub mod load;
 
 use clauses::MergeResult;
 pub use clauses::{Merge, SolutionResult};
+use counters::Counter;
 use dnf::DNF;
 
 // max_size is the maximum allowed size for subset generation
-pub fn solve<Clause: Merge>(
+pub fn solve<Clause: Merge, Count: Counter>(
     dnf: &DNF<Clause>,
     num_vars: u32,
     num_clauses: u32,
     max_size: usize,
-) -> (SolutionResult, usize, f64) {
+) -> (SolutionResult, usize, Count) {
     // critical variable for testing for completion.
-    let mut sum: f64 = 0.0;
-    // total number of variables in all the clauses. (alternatively, parse from the dimacs input)
-    let total_vars = num_vars as i32;
+    // generic over multiple implementation for counting (should be zero cost: monomorphization)
+    let mut sum: Count = Count::new(num_vars);
     // 1st generation. single combinations at every index
     // queue contains (last index in set, size of set, and merged clause)
     let mut queue: VecDeque<(usize, usize, Clause)> = (0..(num_clauses as usize))
         .map(|index| {
-            sum += f64::powi(2.0, total_vars - dnf[index].len() as i32);
+            sum.add(num_vars - dnf[index].len() as u32);
             (index, 1, dnf[index].clone())
         })
         .collect();
@@ -33,7 +34,8 @@ pub fn solve<Clause: Merge>(
     // and will start processing the next generation
     let mut max_seen_size = 1;
 
-    if sum < f64::powi(2.0, total_vars) {
+    // early termination!
+    if sum.less_than(num_vars) {
         return (SolutionResult::Satisfiable, max_seen_size, sum);
     }
 
@@ -41,7 +43,7 @@ pub fn solve<Clause: Merge>(
         if set_size != max_size {
             // extend by another index
             // this new index must be greater than the last index in the set
-            // because our set is an ordered list of increasing indices, this guarantees
+            // because our set is an ordered list of increasing indices (but storing the last_index only), this guarantees
             // every new set we create will be unique
             for new_index in (last_index + 1)..(num_clauses as usize) {
                 // merge the cached set with the clause at the new_index
@@ -51,13 +53,12 @@ pub fn solve<Clause: Merge>(
                         let last_index = last_index + 1;
                         let set_size = set_size + 1;
                         // add to sum the size of the solution space for this merged set
-                        let current_term = f64::powi(2.0, total_vars - clause.len() as i32);
                         if set_size % 2 == 0 {
-                            sum -= current_term;
+                            sum.subtract(num_vars - clause.len() as u32);
                         } else {
-                            sum += current_term
+                            sum.add(num_vars - clause.len() as u32);
                         };
-                        // add this set of clauses and the merge result in the queue to be explored further
+                        // add this last_index, set_size, and merge result in the queue to be explored further
                         queue.push_back((last_index, set_size, clause));
                     }
                     // if incompatible, we do not wish to further explore this and thus do not insert into queue
@@ -74,22 +75,22 @@ pub fn solve<Clause: Merge>(
             return (SolutionResult::Inconclusive, max_seen_size, sum);
         }
         // if this new length is greater than all previous seen sizes, we must have
-        // reached a new level of lengths (advanced to next generation)
+        // reached a new level of lengths (advanced to next generation).
         // by nature of the queue logic, the sizes must be always nondecreasing
         // therefore, once we "level up", we may analyze the sum, as it now accounts for the entire previous level of sizes
         if set_size > max_seen_size {
             max_seen_size = set_size;
             // check the sum and see if it is (a lower bound and above 2^N) or (an upper bound and below 2^n)
-            if max_seen_size % 2 == 0 && sum == f64::powi(2.0, total_vars) {
+            if max_seen_size % 2 == 0 && sum.equal(num_vars) {
                 return (SolutionResult::Unsatisfiable, max_seen_size, sum);
-            } else if max_seen_size % 2 == 1 && sum < f64::powi(2.0, total_vars) {
+            } else if max_seen_size % 2 == 1 && sum.less_than(num_vars) {
                 return (SolutionResult::Satisfiable, max_seen_size, sum);
             }
         }
     }
     // the last "level up" is not caught inside the loop
     // therefore, we add this final check after we've exhausted all search paths in the queue and exited the loop
-    if sum >= f64::powi(2.0, total_vars) {
+    if !sum.less_than(num_vars) {
         (SolutionResult::Unsatisfiable, max_seen_size, sum)
     } else {
         (SolutionResult::Satisfiable, max_seen_size, sum)
