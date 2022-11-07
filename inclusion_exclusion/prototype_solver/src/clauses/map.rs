@@ -8,7 +8,7 @@ use crate::{
     Merge, MergeResult,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MapClause(HashMap<u32, Sign>);
 
 impl Default for MapClause {

@@ -1,6 +1,7 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use inc_exc::{
     clauses::{map::MapClause, vec::VecClause},
+    counters::{float::FloatCounter, gmp::GmpCounter},
     dnf::{Sign, DNF},
     solve, Merge,
 };
@@ -43,14 +44,14 @@ fn single_point(c: &mut Criterion) {
         BenchmarkId::new("VecClause", format!("{NUM_VARS}, {NUM_CLAUSES}, 3")),
         &gen_random_dnf::<VecClause>(NUM_VARS, NUM_CLAUSES, Some(3)),
         |b, dnf| {
-            b.iter(|| solve(dnf, NUM_VARS, NUM_CLAUSES, 3));
+            b.iter(|| solve::<_, GmpCounter>(dnf, NUM_VARS, NUM_CLAUSES, 3));
         },
     );
     group.bench_with_input(
         BenchmarkId::new("MapClause", format!("{NUM_VARS}, {NUM_CLAUSES}, 3")),
         &gen_random_dnf::<MapClause>(NUM_VARS, NUM_CLAUSES, Some(3)),
         |b, dnf| {
-            b.iter(|| solve(dnf, NUM_VARS, NUM_CLAUSES, 3));
+            b.iter(|| solve::<_, GmpCounter>(dnf, NUM_VARS, NUM_CLAUSES, 3));
         },
     );
     group.finish();
@@ -64,14 +65,14 @@ fn vary_var_number(c: &mut Criterion) {
             BenchmarkId::new("VecClause", format!("{num_vars}, {NUM_CLAUSES}, 3")),
             &gen_random_dnf::<VecClause>(num_vars, NUM_CLAUSES, Some(3)),
             |b, dnf| {
-                b.iter(|| solve(dnf, num_vars, NUM_CLAUSES, 3));
+                b.iter(|| solve::<_, GmpCounter>(dnf, num_vars, NUM_CLAUSES, 3));
             },
         );
         group.bench_with_input(
             BenchmarkId::new("MapClause", format!("{num_vars}, {NUM_CLAUSES}, 3")),
             &gen_random_dnf::<MapClause>(num_vars, NUM_CLAUSES, Some(3)),
             |b, dnf| {
-                b.iter(|| solve(dnf, num_vars, NUM_CLAUSES, 3));
+                b.iter(|| solve::<_, GmpCounter>(dnf, num_vars, NUM_CLAUSES, 3));
             },
         );
     }
@@ -88,14 +89,14 @@ fn vary_clause_number(c: &mut Criterion) {
             BenchmarkId::new("VecClause", format!("{NUM_VARS}, {num_clauses}, 3")),
             &gen_random_dnf::<VecClause>(NUM_VARS, num_clauses, Some(3)),
             |b, dnf| {
-                b.iter(|| solve(dnf, NUM_VARS, num_clauses, 3));
+                b.iter(|| solve::<_, FloatCounter>(dnf, NUM_VARS, num_clauses, 3));
             },
         );
         group.bench_with_input(
             BenchmarkId::new("MapClause", format!("{NUM_VARS}, {num_clauses}, 3")),
             &gen_random_dnf::<MapClause>(NUM_VARS, num_clauses, Some(3)),
             |b, dnf| {
-                b.iter(|| solve(dnf, NUM_VARS, num_clauses, 3));
+                b.iter(|| solve::<_, FloatCounter>(dnf, NUM_VARS, num_clauses, 3));
             },
         );
     }

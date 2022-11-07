@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::dnf::{Sign, DNF};
 
 pub mod map;
@@ -12,7 +14,7 @@ pub enum SolutionResult {
 
 pub trait Merge
 where
-    Self: Sized + Clone + Default,
+    Self: Sized + Clone + Default + Debug,
 {
     fn merge(a: Self, b: &Self) -> MergeResult<Self>;
     fn from_vec(vec: Vec<Vec<(u32, Sign)>>) -> DNF<Self>;
