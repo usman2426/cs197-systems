@@ -41,7 +41,7 @@ impl Counter for GmpCounter {
         self.0 += Integer::from(Integer::i_pow_u(2, power_of_two))
     }
 
-    fn subtract(&mut self, power_of_two: u32) {
+    fn sub(&mut self, power_of_two: u32) {
         self.0 -= Integer::from(Integer::i_pow_u(2, power_of_two))
     }
 }

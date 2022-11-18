@@ -28,7 +28,7 @@ impl Counter for FloatCounter {
         self.0 += f64::powf(2.0, power_of_two as f64)
     }
 
-    fn subtract(&mut self, power_of_two: u32) {
+    fn sub(&mut self, power_of_two: u32) {
         self.0 -= f64::powf(2.0, power_of_two as f64)
     }
 }

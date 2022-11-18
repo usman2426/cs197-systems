@@ -12,5 +12,5 @@ where
     fn equal(&self, power_of_two: u32) -> bool;
     fn less_than(&self, power_of_two: u32) -> bool;
     fn add(&mut self, power_of_two: u32);
-    fn subtract(&mut self, power_of_two: u32);
+    fn sub(&mut self, power_of_two: u32);
 }

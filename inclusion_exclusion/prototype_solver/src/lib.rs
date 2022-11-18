@@ -54,7 +54,7 @@ pub fn solve<Clause: Merge, Count: Counter>(
                         let set_size = set_size + 1;
                         // add to sum the size of the solution space for this merged set
                         if set_size % 2 == 0 {
-                            sum.subtract(num_vars - clause.len() as u32);
+                            sum.sub(num_vars - clause.len() as u32);
                         } else {
                             sum.add(num_vars - clause.len() as u32);
                         };
