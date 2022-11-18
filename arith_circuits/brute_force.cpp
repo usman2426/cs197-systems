@@ -24,6 +24,8 @@ public:
   BruteForce(vector<int> n_set) {
     depth = 0;
     treesSoFar = {};
+    prev_start = 0;
+
     treesSoFar.push_back(new Node({.op = var,
                                    .op_a = nullptr,
                                    .op_b = nullptr,
@@ -38,7 +40,6 @@ public:
                             .const_val = n_set[i]}));
                             
     }
-    prev_start = 0;
   }
 
   int grow_to(int max_depth) {
@@ -142,16 +143,6 @@ int countMult(Node* root) {
   }
 }
 
-bool treeEqual(Node* a, Node* b) {
-  if (!a && !b) {
-    return true;
-  }
-  if (!a || !b) {
-    return false;
-  }
-  return a->op == b->op && a->var_val == b->var_val && a->const_val == b->const_val && treeEqual(a->op_a, b->op_a) && treeEqual(a->op_b, b->op_b);
-}
-
 int main() {
   BruteForce bf = BruteForce({1, 2});
 
@@ -199,5 +190,3 @@ int main() {
   cout << "Number of best trees: " << bestTrees.size() << endl;
   return 0;
 }
-
-
