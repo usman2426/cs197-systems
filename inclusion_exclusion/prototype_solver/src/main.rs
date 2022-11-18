@@ -24,7 +24,8 @@ use std::{
 };
 
 use inc_exc::{
-    clauses::vec::VecClause, counters::gmp::GmpCounter, load::parse_dimacs, solve, SolutionResult,
+    clauses::vec::VecClause, counters::bignum::BigCounter, load::parse_dimacs, solve,
+    SolutionResult,
 };
 
 fn main() {
@@ -43,7 +44,7 @@ fn main() {
         .1;
 
         let start = Instant::now();
-        let (result, _, _) = solve::<_, GmpCounter>(&dnf, num_vars, num_clauses, 3);
+        let (result, _, _) = solve::<_, BigCounter>(&dnf, num_vars, num_clauses, 3);
         let duration = start.elapsed();
         if result != expected_result {
             eprintln!(
