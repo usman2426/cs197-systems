@@ -152,15 +152,17 @@ impl Counter for BigCounter {
             return true;
         }
         let (block_index, inner_index) = Self::get_block_and_inner(power_of_two as usize);
+        if block_index >= self.buffer.len() {
+            return true;
+        }
         // for the counter to be less, every bit in a position of more or equal significance compared to this bit must be 0
         // return false if any block is invalid (has higher bits not equal to 0)
         !self
             .buffer
-            // only look at more significant blocks
-            .split_at(block_index)
-            .1
             .iter()
             .enumerate()
+            // only look at more significant blocks
+            .skip(block_index)
             .any(|(index, block)| {
                 // if block is 0, then this block is correct
                 // we short circuit with true when the block is incorrect
