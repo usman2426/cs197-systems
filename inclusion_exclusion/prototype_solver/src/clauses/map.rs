@@ -38,4 +38,8 @@ impl Merge for MapClause {
     fn len(&self) -> usize {
         self.0.len()
     }
+
+    fn new_empty() -> Self {
+        Self(HashMap::new())
+    }
 }

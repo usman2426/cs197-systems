@@ -19,6 +19,7 @@ where
     fn merge(a: Self, b: &Self) -> MergeResult<Self>;
     fn from_vec(vec: Vec<Vec<(u32, Sign)>>) -> DNF<Self>;
     fn len(&self) -> usize;
+    fn new_empty() -> Self;
 }
 
 pub enum MergeResult<T: Merge> {

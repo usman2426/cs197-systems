@@ -79,6 +79,10 @@ impl Merge for VecClause {
     fn len(&self) -> usize {
         self.0.len()
     }
+
+    fn new_empty() -> Self {
+        Self(Vec::new())
+    }
 }
 
 impl From<Vec<(u32, Sign)>> for VecClause {
