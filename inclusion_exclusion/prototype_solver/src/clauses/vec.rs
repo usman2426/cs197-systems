@@ -8,7 +8,7 @@ use crate::{
 
 /// must always be sorted
 #[derive(Clone, Debug)]
-pub struct VecClause(Vec<(u32, Sign)>);
+pub struct VecClause(Vec<(u16, Sign)>);
 
 impl Default for VecClause {
     fn default() -> Self {
@@ -63,7 +63,7 @@ impl Merge for VecClause {
         }
     }
 
-    fn from_vec(vec: Vec<Vec<(u32, Sign)>>) -> DNF<Self> {
+    fn from_vec(vec: Vec<Vec<(u16, Sign)>>) -> DNF<Self> {
         // sort and deduplicate the clauses
         DNF::from(
             vec.into_iter()
@@ -85,8 +85,8 @@ impl Merge for VecClause {
     }
 }
 
-impl From<Vec<(u32, Sign)>> for VecClause {
-    fn from(value: Vec<(u32, Sign)>) -> Self {
+impl From<Vec<(u16, Sign)>> for VecClause {
+    fn from(value: Vec<(u16, Sign)>) -> Self {
         VecClause(value)
     }
 }
