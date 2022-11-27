@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 pub mod clauses;
 pub mod counters;
 pub mod dnf;
@@ -20,79 +18,43 @@ pub fn solve<Clause: Merge, Count: Counter>(
     // critical variable for testing for completion.
     // generic over multiple implementation for counting (should be zero cost: monomorphization)
     let mut sum: Count = Count::new(num_vars);
-    // 1st generation. single combinations at every index
-    // queue contains (last index in set, size of set, and merged clause)
-    let mut queue: VecDeque<(usize, usize, Clause)> = (0..(num_clauses as usize))
-        .map(|index| {
-            sum.add(num_vars - dnf[index].len() as u32);
-            (index, 1, dnf[index].clone())
-        })
-        .collect();
 
-    // the queue can contain future and current generations (generations by size of subset)
-    // therefore, we use max_seen_size to determine when we have finished one generation
-    // and will start processing the next generation
-    let mut max_seen_size = 1;
+    let mut current_generation: Vec<(usize, Clause)> = vec![(0, Clause::new_empty())];
+    let mut next_generation: Vec<(usize, Clause)>;
 
-    // early termination!
-    if sum.less_than(num_vars) {
-        return (SolutionResult::Satisfiable, max_seen_size, sum);
-    }
-
-    while let Some((last_index, set_size, merge_result)) = queue.pop_front() {
-        if set_size != max_size {
-            // extend by another index
-            // this new index must be greater than the last index in the set
-            // because our set is an ordered list of increasing indices (but storing the last_index only), this guarantees
-            // every new set we create will be unique
-            for new_index in (last_index + 1)..(num_clauses as usize) {
-                // merge the cached set with the clause at the new_index
-                match Clause::merge(merge_result.clone(), &dnf[new_index]) {
-                    // if the merge succeeds,
-                    MergeResult::Set(clause) => {
-                        let last_index = last_index + 1;
-                        let set_size = set_size + 1;
-                        // add to sum the size of the solution space for this merged set
-                        if set_size % 2 == 0 {
-                            sum.subtract(num_vars - clause.len() as u32);
-                        } else {
-                            sum.add(num_vars - clause.len() as u32);
-                        };
-                        // add this last_index, set_size, and merge result in the queue to be explored further
-                        queue.push_back((last_index, set_size, clause));
-                    }
-                    // if incompatible, we do not wish to further explore this and thus do not insert into queue
-                    // HOWEVER, it may be wise to create a cache structure to allow storing INVALID results
-                    // for example, we may explore 1,3 before 1,2,3. if 1,3 is invalid, we may store that it is invalid and look up later
-                    // 1,3 is not an obvious direct ancestor of 1,2,3. thus, this search would necessitate linear probing of
-                    // every possible indirect ancestor in the previous generation: 2,3; 1,3; 1,2
-                    // thus, we do not implement it here
-                    MergeResult::Incompatible => {}
+    for combo_size in 0..max_size {
+        if current_generation.len() == 0 {
+            break;
+        }
+        next_generation = vec![];
+        for (last_index, merge_result) in current_generation.iter() {
+            for new_index in *last_index..(num_clauses as usize) {
+                if let MergeResult::Set(new_merge_result) =
+                    Clause::merge(merge_result.clone(), &dnf[new_index])
+                {
+                    // new_index + 1 is the starting point for the combos now
+                    next_generation.push((new_index + 1, new_merge_result));
                 }
             }
-        } else {
-            // reached maximum size
-            return (SolutionResult::Inconclusive, max_seen_size, sum);
         }
-        // if this new length is greater than all previous seen sizes, we must have
-        // reached a new level of lengths (advanced to next generation).
-        // by nature of the queue logic, the sizes must be always nondecreasing
-        // therefore, once we "level up", we may analyze the sum, as it now accounts for the entire previous level of sizes
-        if set_size > max_seen_size {
-            max_seen_size = set_size;
-            // check the sum and see if it is (a lower bound and above 2^N) or (an upper bound and below 2^n)
-            if max_seen_size % 2 == 0 && sum.equal(num_vars) {
-                return (SolutionResult::Unsatisfiable, max_seen_size, sum);
-            } else if max_seen_size % 2 == 1 && sum.less_than(num_vars) {
-                return (SolutionResult::Satisfiable, max_seen_size, sum);
-            }
+
+        // calculating sum
+        for (_, clause) in next_generation.iter() {
+            if combo_size % 2 == 1 {
+                sum.sub(num_vars - clause.len() as u32);
+            } else {
+                sum.add(num_vars - clause.len() as u32);
+            };
+        }
+
+        current_generation = next_generation;
+
+        if combo_size % 2 == 1 && sum.equal(num_vars) {
+            return (SolutionResult::Unsatisfiable, combo_size, sum);
+        } else if combo_size % 2 == 0 && sum.less_than(num_vars) {
+            return (SolutionResult::Satisfiable, combo_size, sum);
         }
     }
-    // the last "level up" is not caught inside the loop
-    // therefore, we add this final check after we've exhausted all search paths in the queue and exited the loop
-    if !sum.less_than(num_vars) {
-        (SolutionResult::Unsatisfiable, max_seen_size, sum)
-    } else {
-        (SolutionResult::Satisfiable, max_seen_size, sum)
-    }
+
+    (SolutionResult::Inconclusive, max_size - 1, sum)
 }

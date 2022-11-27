@@ -25,7 +25,7 @@ fn front_comments(input: &str) -> IResult<&str, Vec<(&str, &str)>> {
 }
 
 // swallows any comments in the middle of the block of variables defining the clause
-fn clause(input: &str) -> IResult<&str, Vec<(u32, Sign)>> {
+fn clause(input: &str) -> IResult<&str, Vec<(u16, Sign)>> {
     let (input, digits) = separated_list1(
         // separator is either a space or a newline with possible comments
         alt((
@@ -45,9 +45,9 @@ fn clause(input: &str) -> IResult<&str, Vec<(u32, Sign)>> {
                 if let Some(_) = s.0 {
                     // negation. those with hyphens become positive.
                     // input is in CNF, so negating will form the DNF
-                    (s.1.parse::<u32>().unwrap(), Sign::Positive)
+                    (s.1.parse::<u16>().unwrap(), Sign::Positive)
                 } else {
-                    (s.1.parse::<u32>().unwrap(), Sign::Negative)
+                    (s.1.parse::<u16>().unwrap(), Sign::Negative)
                 }
             })
             .collect(),
