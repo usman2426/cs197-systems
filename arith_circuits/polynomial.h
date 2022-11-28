@@ -11,6 +11,11 @@ class Polynomial {
   int n_var;
   map<vector<int>, int> poly_map;
 
+  Polynomial() {
+    n_var = 0;
+    poly_map = {};
+  }
+
   Polynomial(int n) {
     n_var = n;
     poly_map = {};
