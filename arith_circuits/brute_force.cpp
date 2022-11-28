@@ -16,12 +16,11 @@ struct Node {
 
 class BruteForce {
 public:
-  vector<int> n_set; // constants allowed in the tree
   int depth;
   int prev_start;
   vector<Node*> treesSoFar;
   
-  BruteForce(vector<int> n_set) {
+  BruteForce(vector<int> n_set) { // n_set is constants allowed in the tree
     depth = 0;
     treesSoFar = {};
     prev_start = 0;
