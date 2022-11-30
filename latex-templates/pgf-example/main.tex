@@ -131,12 +131,13 @@ do some pretty cool stuff with it!
         \centering
         \begin{tikzpicture}[scale=0.75]
             \begin{axis}[
-                legend pos=north west,
                 xmin=0,
                 xlabel={Time (Seconds)},
                 ylabel={Number of Test Cases Solved},
                 domain=0:6,
                 samples=20,
+                legend entries={C GMP, Rust GMP, Zaleski},
+                legend pos=south east,
             ]
                 \addplot[blue] {sumcgmp(x)};
                 \addplot[red] {sumrustgmp(x)};
