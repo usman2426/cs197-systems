@@ -1,0 +1,106 @@
+\documentclass[acmsmall]{acmart}\settopmatter{}
+
+\usepackage{datatool}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage{etoolbox}
+
+\input{preamble}
+
+% https://tex.stackexchange.com/questions/98003/filter-rows-from-a-table
+\pgfplotsset{
+    discard if not/.style 2 args={
+        x filter/.code={
+            \edef\tempa{\thisrow{#1}}
+            % https://tex.stackexchange.com/questions/279337/etoolbox-how-to-compare-two-lists
+            \edef\tempb{}
+            \forcsvlist{\listadd\tempb}{#2}
+            % https://mirror.las.iastate.edu/tex-archive/macros/latex/contrib/etoolbox/etoolbox.pdf
+            \xifinlist{\tempa}{\tempb}{}{\def\pgfmathresult{inf}}
+        }
+    }
+}
+
+\DTLloaddb{shatardata}{shatar.csv}
+
+\newcommand\declaresummer[2]{
+    \pgfmathdeclarefunction{sum#1}{1}{%
+        \pgfmathsetmacro\ret{0}%
+        \DTLforeach{shatardata}{\time={#2}}{%
+            % https://tex.stackexchange.com/questions/46232/how-to-check-if-a-macro-expands-to-something-greater-than-a-constant
+            \pgfmathsetmacro\ret{\ret + (\time < ##1 ? 1 : 0)}%
+        }%
+        \pgfmathparse{\ret}%
+    }
+}
+
+\declaresummer{cgmp}{C GMP}
+\declaresummer{rustgmp}{Rust GMP}
+\declaresummer{zaleski}{Zaleski Solver}
+
+\begin{document}
+
+\title{Hello Test PGF}
+
+\author{FirstName LastName}
+
+\begin{abstract}
+    Your abstract goes here.
+    %
+    Super fun!
+\end{abstract}
+
+
+\maketitle
+
+\section{PGF Examples}
+See \url{http://vonbuhren.free.fr/Liens/pgfplots.pdf} and
+\url{https://pgf-tikz.github.io/pgf/pgfmanual.pdf}
+
+\begin{figure}
+    \begin{tikzpicture}[scale=0.8]
+        \begin{axis}[
+            legend pos=north west,
+            symbolic x coords={100v150c,200v300c,300v450c,500v750c,100v200c,200v400c,300v600c,500v1000c,p-1,p-2,p-3,5,7,30v30c,30v35c,30v40c,30v45c,30v50c,80v30c,90v30c},
+            ymin=0,
+            ymode=log,
+            % https://tex.stackexchange.com/questions/86680/pgfplots-and-log-scale-bars-starting-from-the-bottom-of-the-screen
+            log origin=infty,
+            xtick=data,
+            xlabel={Test Case},
+            ylabel={Time (Seconds)},
+            ybar,
+            unbounded coords=jump,
+            legend entries={Rust GMP, Rust Bignum},
+        ]
+            \addplot[fill=blue,discard if not={Test Case}{100v150c,200v300c,300v450c,500v750c}]
+                table[col sep=comma,y=Rust GMP]
+                {shatar.csv};
+            \addplot[fill=red,discard if not={Test Case}{100v150c,200v300c,300v450c,500v750c}]
+                table[col sep=comma,y=Rust Bignum]
+                {shatar.csv};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Some description of your figure. Timeout: 120 seconds.}
+    \label{fig:shatar-rust}
+\end{figure}
+
+\begin{tikzpicture}
+    \begin{axis}[
+        legend pos=north west,
+        xmin=0,
+        xlabel={Time (Seconds)},
+        ylabel={Number of Test Cases Solved},
+        domain=0:6,
+        samples=20,
+    ]
+        \addplot[blue] {sumcgmp(x)};
+        \addplot[red] {sumrustgmp(x)};
+        \addplot[orange] {sumzaleski(x)};
+    \end{axis}
+\end{tikzpicture}
+
+\end{document}
