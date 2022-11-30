@@ -1,5 +1,6 @@
 \documentclass[acmsmall]{acmart}\settopmatter{}
 
+% PREAMBLE, not too important
 \usepackage{datatool}
 \usepackage{hyperref}
 \usepackage{tikz}
@@ -7,9 +8,25 @@
 \usepackage{booktabs}
 \usepackage{subcaption}
 \usepackage{etoolbox}
+\usepackage{prettyref}
+\newcommand{\pref}{\prettyref}
+\newrefformat{thm}{Theorem~\ref{#1}}
+\newrefformat{cor}{Corollary~\ref{#1}}
+\newrefformat{lem}{Lemma~\ref{#1}}
+\newrefformat{cha}{Chapter~\ref{#1}}
+\newrefformat{sec}{Section~\ref{#1}}
+\newrefformat{app}{Appendix~\ref{#1}}
+\newrefformat{tab}{Table~\ref{#1}}
+\newrefformat{fig}{Figure~\ref{#1}}
+\newrefformat{alg}{Algorithm~\ref{#1}}
+\newrefformat{exa}{Example~\ref{#1}}
+\newrefformat{def}{Definition~\ref{#1}}
+\newrefformat{li}{Line~\ref{#1}}
+\newrefformat{eq}{Equation~\ref{#1}}
+\newrefformat{exa}{Example~\ref{#1}}
 
-\input{preamble}
-
+% Helper to let us select which test case rows we want to display in any given
+% bar chart.
 % https://tex.stackexchange.com/questions/98003/filter-rows-from-a-table
 \pgfplotsset{
     discard if not/.style 2 args={
@@ -24,8 +41,13 @@
     }
 }
 
+% Load the raw data using DTL, which lets us perform computations on the data
+% (e.g., accumulation sums for the time-on-x-axis chart).
 \DTLloaddb{shatardata}{shatar.csv}
 
+% Now for each solver (column in shatar.csv) we're going to define a pgf
+% function sum[solvername] so that sum[solvername](x) is the count of the numbe
+% of test cases that [solvername] can solve in at most x seconds.
 \newcommand\declaresummer[2]{
     \pgfmathdeclarefunction{sum#1}{1}{%
         \pgfmathsetmacro\ret{0}%
@@ -40,6 +62,8 @@
 \declaresummer{cgmp}{C GMP}
 \declaresummer{rustgmp}{Rust GMP}
 \declaresummer{zaleski}{Zaleski Solver}
+% Add to this list if you want to support others.
+% There's probably a better way of doing this ...
 
 \begin{document}
 
@@ -57,50 +81,73 @@
 \maketitle
 
 \section{PGF Examples}
-See \url{http://vonbuhren.free.fr/Liens/pgfplots.pdf} and
-\url{https://pgf-tikz.github.io/pgf/pgfmanual.pdf}
+Here are some examples of using PGF/PGFPlots to build plots in LaTeX directly
+from your raw CSV data. I've copied some links to useful references into the
+LaTeX source file, the most useful are the PGFPlots manual and the PGF/TikZ
+manual.
 
-\begin{figure}
-    \begin{tikzpicture}[scale=0.8]
-        \begin{axis}[
-            legend pos=north west,
-            symbolic x coords={100v150c,200v300c,300v450c,500v750c,100v200c,200v400c,300v600c,500v1000c,p-1,p-2,p-3,5,7,30v30c,30v35c,30v40c,30v45c,30v50c,80v30c,90v30c},
-            ymin=0,
-            ymode=log,
-            % https://tex.stackexchange.com/questions/86680/pgfplots-and-log-scale-bars-starting-from-the-bottom-of-the-screen
-            log origin=infty,
-            xtick=data,
-            xlabel={Test Case},
-            ylabel={Time (Seconds)},
-            ybar,
-            unbounded coords=jump,
-            legend entries={Rust GMP, Rust Bignum},
-        ]
-            \addplot[fill=blue,discard if not={Test Case}{100v150c,200v300c,300v450c,500v750c}]
-                table[col sep=comma,y=Rust GMP]
-                {shatar.csv};
-            \addplot[fill=red,discard if not={Test Case}{100v150c,200v300c,300v450c,500v750c}]
-                table[col sep=comma,y=Rust Bignum]
-                {shatar.csv};
-        \end{axis}
-    \end{tikzpicture}
-    \caption{Some description of your figure. Timeout: 120 seconds.}
-    \label{fig:shatar-rust}
+% http://vonbuhren.free.fr/Liens/pgfplots.pdf
+% https://pgf-tikz.github.io/pgf/pgfmanual.pdf
+
+The first plot, as shown in~\pref{fig:shatar-rust}, demonstrates how to make a
+bar plot. The second plot, shown in~\pref{fig:shatar-accum}, shows how to make
+a plot that shows, for each time, how many test cases were solved by that time
+for a few solvers.
+
+\LaTeX{} is a pretty wacky programming language (whitespace is \emph{very}
+important!) but at the end of the day it is a programming language and you can
+do some pretty cool stuff with it!
+
+\begin{figure}[b]
+    \begin{subfigure}[t]{0.49\linewidth}
+        \centering
+        \begin{tikzpicture}[scale=0.75]
+            \begin{axis}[
+                legend pos=north west,
+                symbolic x coords={100v150c,200v300c,300v450c,500v750c,100v200c,200v400c,300v600c,500v1000c,p-1,p-2,p-3,5,7,30v30c,30v35c,30v40c,30v45c,30v50c,80v30c,90v30c},
+                ymin=0,
+                ymode=log,
+                % https://tex.stackexchange.com/questions/86680/pgfplots-and-log-scale-bars-starting-from-the-bottom-of-the-screen
+                log origin=infty,
+                xtick=data,
+                xlabel={Test Case},
+                ylabel={Time (Seconds)},
+                ybar,
+                unbounded coords=jump,
+                legend entries={Rust GMP, Rust Bignum},
+            ]
+                \addplot[fill=blue,discard if not={Test Case}{100v150c,200v300c,300v450c,500v750c}]
+                    table[col sep=comma,y=Rust GMP]
+                    {shatar.csv};
+                \addplot[fill=red,discard if not={Test Case}{100v150c,200v300c,300v450c,500v750c}]
+                    table[col sep=comma,y=Rust Bignum]
+                    {shatar.csv};
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Some description of your figure. Timeout: 120 seconds.}
+        \label{fig:shatar-rust}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.49\linewidth}
+        \centering
+        \begin{tikzpicture}[scale=0.75]
+            \begin{axis}[
+                legend pos=north west,
+                xmin=0,
+                xlabel={Time (Seconds)},
+                ylabel={Number of Test Cases Solved},
+                domain=0:6,
+                samples=20,
+            ]
+                \addplot[blue] {sumcgmp(x)};
+                \addplot[red] {sumrustgmp(x)};
+                \addplot[orange] {sumzaleski(x)};
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Time vs. N-Solved. Description of your figure.}
+        \label{fig:shatar-accum}
+    \end{subfigure}
+    \caption{Your results. Overall description.}
+    \label{fig:shatar-eval}
 \end{figure}
-
-\begin{tikzpicture}
-    \begin{axis}[
-        legend pos=north west,
-        xmin=0,
-        xlabel={Time (Seconds)},
-        ylabel={Number of Test Cases Solved},
-        domain=0:6,
-        samples=20,
-    ]
-        \addplot[blue] {sumcgmp(x)};
-        \addplot[red] {sumrustgmp(x)};
-        \addplot[orange] {sumzaleski(x)};
-    \end{axis}
-\end{tikzpicture}
 
 \end{document}
