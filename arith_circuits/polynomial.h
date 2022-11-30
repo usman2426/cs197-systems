@@ -94,6 +94,29 @@ class Polynomial {
     return result;
   }
 
+  Polynomial operator * (int constant) {
+    Polynomial result = Polynomial(n_var);
+    result.poly_map = {};
+
+    for (auto const& [key, val] : poly_map) {
+      result.poly_map[key] = val * constant;
+    }
+    return result;
+  }
+
+  Polynomial operator + (int constant) {
+    Polynomial result = Polynomial(n_var);
+    result.poly_map = {};
+
+    for (auto const& [key, val] : poly_map) {
+      result.poly_map[key] = val;
+    }
+    vector<int> term(n_var, 0);
+    result.poly_map[term] = constant;
+    
+    return result;
+  }
+
 };
 
 
