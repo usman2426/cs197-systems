@@ -1,28 +1,42 @@
 /*
-The original implementation, works but very slow for reasons addressed in the faster version
+Optimizes stochastic.cpp by removing the poly_set operations
+Storing operands as pointers instead of in a vector
+Moving shared variables to the top of the program
+Storing costs as constants instead of in a map
+Passing large object as parameters with const ref
+
+Switching set to unordered_set didn't often have a noticeable effect, 
+but if it did it usually made the runtime slower
 */
 
 #include "polynomial.h"
 #include <set>
-#include <map>
 #include <limits>
 #include <random>
 #include <cmath>
 #include <algorithm>
 using namespace std;
 
+random_device rd; 
+mt19937 gen(rd()); 
+
+int id_counter = 0;
+
 enum Operation {add, mult, var, constant};
+
+const float MULT_COST = 1;
+const float ADD_COST = 0.25;
 
 struct Node {
   Operation op;
   int arg;
   int val;
-  vector<Node> operands;
+  Node* op0;
+  Node* op1;
   int id;
   Polynomial poly;
   set<int> add_set;
   set<int> mult_set;
-  set<vector<int>> poly_set;
 };
 
 struct Circuit {
@@ -59,11 +73,9 @@ Node get_leaf(int n_var, int arg, int val) {
     poly.poly_map[powers] = val;
     op = constant;
   }
-  
-  random_device rd; 
-  mt19937 gen(rd()); 
-  uniform_int_distribution<> distr(0, INT_MAX);
-  Node leaf = {op, arg, val, {}, distr(gen), poly, {}, {}, {}};
+
+  id_counter += 1;
+  Node leaf = {op, arg, val, nullptr, nullptr, id_counter, poly, {}, {}};
   return leaf;
 }
 
@@ -71,15 +83,12 @@ class Stochastic {
   public:
   Polynomial target;
   int n_var;
-  map<Operation, float> op_costs;
   vector<Node> leaves;
   int max_val;
 
-  Stochastic(Polynomial poly, int n_vals, map<Operation, float> costs) {
+  Stochastic(const Polynomial &poly, int n_vals) {
     target = poly;
     n_var = poly.n_var;
-    
-    op_costs = costs;
 
     for (int i = 0; i < n_var; i++) {
       leaves.push_back(get_leaf(n_var, i, 0));
@@ -89,8 +98,7 @@ class Stochastic {
     }
   }
 
-  Circuit blank_circuit(vector<Circuit> models) {
-    
+  Circuit blank_circuit(const vector<Circuit> &models) {
     set<int> seen_ids = {};
     vector<Node> nodes = {};
     for (int i = 0; i < leaves.size(); i++) {
@@ -108,14 +116,12 @@ class Stochastic {
       }
     }
 
-    random_device rd; 
-    mt19937 gen(rd()); 
     uniform_int_distribution<> distr(0, nodes.size() - 1);
     Circuit newCirc = {nodes[distr(gen)], 0, nodes};
     return newCirc;
   }
 
-  float get_pred(Circuit circuit, bool simple) {
+  float get_pred(const Circuit &circuit, bool simple) {
     Polynomial r = circuit.root.poly;
 
     int curr_max = 0;
@@ -146,7 +152,7 @@ class Stochastic {
     for (auto const& [key, val] : target.poly_map) {
       s_p.insert(key);
     }
-
+    
     set<vector<int>> unique1;
     set_difference(s_a.begin(), s_a.end(), s_p.begin(), s_p.end(),
       inserter(unique1, unique1.end()));
@@ -154,16 +160,13 @@ class Stochastic {
     set_difference(s_p.begin(), s_p.end(), s_a.begin(), s_a.end(),
       inserter(unique2, unique2.end()));
 
+    // getting all the terms that are unique to target and r
     set<vector<int>> unique;
     set_union(unique1.begin(), unique1.end(), unique2.begin(), unique2.end(),
       inserter(unique, unique.end()));
 
-    set<vector<int>> diff;
-    set_difference(unique.begin(), unique.end(), circuit.root.poly_set.begin(), circuit.root.poly_set.end(),
-      inserter(diff, diff.end()));
-
     vector<int> temp_sums = {};
-    for (const auto& vec : diff) {
+    for (const auto& vec : unique) {
       int sum = 0;
       for (const auto& elem : vec) {
         sum += elem;
@@ -179,19 +182,17 @@ class Stochastic {
     return cost;
   }
 
-  Circuit create_new(Circuit circuit, Operation op, vector<Node> operands, bool track_sets) {
-    random_device rd; 
-    mt19937 gen(rd()); 
-    uniform_int_distribution<> distr(0, INT_MAX);
-    int id = distr(gen);
+  Circuit create_new(Circuit circuit, const Operation &op, Node* op0, Node* op1, bool track_sets) {
+    id_counter += 1;
+    int id = id_counter;
 
     set<int> add_set;
     set<int> mult_set;
-
+    
     if (track_sets) {
-      set_union(operands[0].add_set.begin(), operands[0].add_set.end(), operands[1].add_set.begin(), operands[1].add_set.end(),
+      set_union(op0->add_set.begin(), op0->add_set.end(), op1->add_set.begin(), op1->add_set.end(),
         inserter(add_set, add_set.end()));
-      set_union(operands[0].mult_set.begin(), operands[0].mult_set.end(), operands[1].mult_set.begin(), operands[1].mult_set.end(),
+      set_union(op0->mult_set.begin(), op0->mult_set.end(), op1->mult_set.begin(), op1->mult_set.end(),
         inserter(mult_set, mult_set.end()));
 
       if (op == add) {
@@ -203,36 +204,23 @@ class Stochastic {
 
     Polynomial newPoly;
     if (op == add) {
-      newPoly = operands[0].poly + operands[1].poly;
+      newPoly = op0->poly + op1->poly;
     } else {
-      newPoly = operands[0].poly * operands[1].poly;
+      newPoly = op0->poly * op1->poly;
     }
 
-    // building up a union across 4 sets
-    set<vector<int>> op0_terms;
-    set<vector<int>> op1_terms;
-    set<vector<int>> op_union;
+    Node newNode = {op, -1, 0, op0, op1, id_counter, newPoly, add_set, mult_set};
 
-    for (auto const& elem : operands[0].poly.poly_map) {
-      op0_terms.insert(elem.first);
+    float cost = 0;
+    if (op == mult) {
+      cost = circuit.cost + MULT_COST;
+    } else {
+      cost = circuit.cost + ADD_COST;
     }
-    for (auto const& elem : operands[1].poly.poly_map) {
-      op1_terms.insert(elem.first);
-    }
-
-    set_union(op0_terms.begin(), op0_terms.end(), op1_terms.begin(), op1_terms.end(), inserter(op_union, op_union.end()));
-    set<vector<int>> op_union1;
-    set_union(operands[0].poly_set.begin(), operands[0].poly_set.end(), op_union.begin(), op_union.end(), inserter(op_union1, op_union1.end()));
-    set<vector<int>> op_union2;
-    set_union(operands[1].poly_set.begin(), operands[1].poly_set.end(), op_union1.begin(), op_union1.end(), inserter(op_union2, op_union2.end()));
-
-    Node newNode = {op, -1, 0, operands, id, newPoly, add_set, mult_set, op_union2};
-
-    float cost = circuit.cost + op_costs[op];
     if (track_sets) {
-      cost = op_costs[add] * newNode.add_set.size() + op_costs[mult] * newNode.mult_set.size();
+      cost = ADD_COST * newNode.add_set.size() + MULT_COST * newNode.mult_set.size();
     }
-
+    
     circuit.nodes.push_back(newNode);
     Circuit newC = {newNode, cost, circuit.nodes};
 
@@ -242,6 +230,7 @@ class Stochastic {
   Circuit sample_search(int max_iters, int max_cost, float alpha, float gamma, bool verbose, bool use_pred, int n_models, bool wrapped) {
     Circuit best;
     bool soln = false;
+    
     int solutions_found = 0;
 
     Circuit curr = blank_circuit({});
@@ -284,7 +273,7 @@ class Stochastic {
       for (int n = 0; n < curr.nodes.size(); n++) {
         for (auto const& oper : {add, mult}) {
           total_iters += 1;
-          Circuit newCirc = create_new(curr, oper, {curr.root, curr.nodes[n]}, n_models > 0);
+          Circuit newCirc = create_new(curr, oper, &curr.root, &curr.nodes[n], n_models > 0);
 
           int new_max = 0;
           for (auto const& [key, val] : newCirc.root.poly.poly_map) {
@@ -294,6 +283,7 @@ class Stochastic {
             }
           }
           if (new_max == 0) continue;
+
           if (newCirc.root.poly.poly_map == target.poly_map) {
             if (!soln || newCirc.cost < best.cost) {
               soln = true;
@@ -315,7 +305,6 @@ class Stochastic {
               if (wrapped) {
                 priority = newCirc.cost + 1000 * get_pred(newCirc, true);
               }
-
               if (n_models > 0 && (models.size() < n_models || priority < models.back().priority)) {
                 PrioritizedCircuit pc = {priority, newCirc, pred};
                 potential_models.push_back(pc);
@@ -351,8 +340,6 @@ class Stochastic {
         }
         curr = blank_circuit(modelCircuits);
       } else {
-        random_device rd;
-        mt19937 gen(rd());
         discrete_distribution<> d(weights.begin(), weights.end());
         
         int choice = d(gen);
@@ -376,7 +363,7 @@ int main() {
   poly.new_term({0, 0, 1}, 1);
   poly.print();
 
-  Stochastic engine = Stochastic(poly, 8, {{add, 0.25}, {mult, 1}});
+  Stochastic engine = Stochastic(poly, 8);
   Circuit sol = engine.sample_search(10000, 10, 1, 1, false, true, 3, true);
 
   cout << "Target: ";

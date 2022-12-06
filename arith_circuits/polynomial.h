@@ -1,15 +1,28 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <map>
 using namespace std;
+
+// taken from https://jimmy-shen.medium.com/stl-map-unordered-map-with-a-vector-for-the-key-f30e5f670bae
+struct VectorHasher {
+    int operator()(const vector<int> &V) const {
+        int hash = V.size();
+        for(auto &i : V) {
+            hash ^= i + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        }
+        return hash;
+    }
+};
 
 const string letters = "abcdefghijklmnopqrstuvwxyz";
 
 class Polynomial {
   public:
   int n_var;
-  map<vector<int>, int> poly_map;
+  //map<vector<int>, int> poly_map;
+  unordered_map<vector<int>, int, VectorHasher> poly_map;
 
   Polynomial() {
     n_var = 0;
@@ -46,35 +59,39 @@ class Polynomial {
     cout << output.substr(0, output.size() - 3) << endl; // -3 to get rid of the extra plus sign and spaces at the end
   }
 
-  Polynomial operator + (Polynomial obj) {
-    Polynomial result = Polynomial(n_var);
+  const Polynomial& operator + (const Polynomial &obj) const {
+    static Polynomial result = Polynomial(n_var);
     result.poly_map = poly_map;
 
     for (auto const& [key, val] : obj.poly_map) {
       if (result.poly_map.count(key)) {
-        result.poly_map[key] += obj.poly_map[key];
+        //result.poly_map[key] += obj.poly_map[key];
+        result.poly_map.at(key) += obj.poly_map.at(key);
       } else {
-        result.poly_map[key] = obj.poly_map[key];
+        //result.poly_map[key] = obj.poly_map[key];
+        result.poly_map.insert({key, obj.poly_map.at(key)});
       }
     }
     return result;
   }
 
-  Polynomial operator - (Polynomial obj) {
-    Polynomial result = Polynomial(n_var);
+  const Polynomial& operator - (const Polynomial &obj) const {
+    static Polynomial result = Polynomial(n_var);
     result.poly_map = poly_map;
 
     for (auto const& [key, val] : obj.poly_map) {
       if (result.poly_map.count(key)) {
-        result.poly_map[key] -= obj.poly_map[key];
+        //result.poly_map[key] -= obj.poly_map[key];
+        result.poly_map.at(key) -= obj.poly_map.at(key);
       } else {
-        result.poly_map[key] = obj.poly_map[key] * -1;
+        //result.poly_map[key] = obj.poly_map[key] * -1;
+        result.poly_map.insert({key, obj.poly_map.at(key) * -1});
       }
     }
     return result;
   }
 
-  Polynomial operator * (Polynomial obj) {
+  const Polynomial operator * (const Polynomial &obj) const {
     Polynomial result = Polynomial(n_var);
     result.poly_map = {};
 
@@ -94,7 +111,7 @@ class Polynomial {
     return result;
   }
 
-  Polynomial operator * (int constant) {
+  const Polynomial operator * (const int &constant) const {
     Polynomial result = Polynomial(n_var);
     result.poly_map = {};
 
@@ -104,7 +121,7 @@ class Polynomial {
     return result;
   }
 
-  Polynomial operator + (int constant) {
+  const Polynomial operator + (const int &constant) const {
     Polynomial result = Polynomial(n_var);
     result.poly_map = {};
 
