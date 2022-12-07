@@ -27,8 +27,8 @@ pub fn solve<Clause: Merge, Count: Counter>(
             break;
         }
         next_generation = vec![];
-        for (last_index, merge_result) in current_generation.iter() {
-            for new_index in *last_index..(num_clauses as usize) {
+        while let Some((last_index, merge_result)) = current_generation.pop() {
+            for new_index in last_index..(num_clauses as usize) {
                 if let MergeResult::Set(new_merge_result) =
                     Clause::merge(merge_result.clone(), &dnf[new_index])
                 {
