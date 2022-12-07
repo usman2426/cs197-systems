@@ -2,7 +2,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_till},
     character::{
-        complete::{digit1, newline},
+        complete::{digit1, newline, space1, line_ending},
         is_newline,
     },
     combinator::{map, opt, verify},
@@ -27,16 +27,16 @@ fn front_comments(input: &str) -> IResult<&str, Vec<(&str, &str)>> {
 // swallows any comments in the middle of the block of variables defining the clause
 fn clause(input: &str) -> IResult<&str, Vec<(u16, Sign)>> {
     let (input, digits) = separated_list1(
-        // separator is either a space or a newline with possible comments
+        // separator is either space or a newline with possible comments
         alt((
-            map(tag(" "), |_| ()),
-            map(pair(newline, front_comments), |_| ()),
+            map(space1, |_| ()),
+            map(pair(line_ending, front_comments), |_| ()),
         )),
         // nonzero numbers that may start with a "-"
         verify(pair(opt(tag("-")), digit1), |(_, d)| d != &"0"),
     )(input)?;
-    // swallow the final " 0" if it exists and the newline if it exists
-    let (input, _) = opt(terminated(tag(" 0"), opt(newline)))(input)?;
+    // swallow the final " *0\n?" if it exists and the newline if it exists
+    let (input, _) = opt(terminated(space1, pair(tag("0"), opt(line_ending))))(input)?;
     Ok((
         input,
         digits
@@ -59,9 +59,10 @@ fn clause(input: &str) -> IResult<&str, Vec<(u16, Sign)>> {
 pub fn parse_dimacs<T: Merge>(file_contents: &str) -> IResult<&str, (DNF<T>, u32, u32)> {
     let input = file_contents;
     let (input, _) = front_comments(input)?;
-    let (input, _) = tag("p cnf ")(input)?;
-    let (input, num_vars) = terminated(digit1, tag(" "))(input)?;
-    let (input, num_clauses) = terminated(digit1, newline)(input)?;
+    let (input, _) = terminated(tag("p"), space1)(input)?;
+    let (input, _) = terminated(tag("cnf"), space1)(input)?;
+    let (input, num_vars) = terminated(digit1, space1)(input)?;
+    let (input, num_clauses) = terminated(digit1, line_ending)(input)?;
     let (input, _) = front_comments(input)?;
     // the clauses in the input are in cnf form. therefore, we negate every value while parsing to obtain the dnf
     many1(terminated(clause, opt(front_comments)))(input).map(|out| {
