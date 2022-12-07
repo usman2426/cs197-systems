@@ -1,107 +1,104 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use std::{
+    fs::{self, DirEntry},
+    time::Instant,
+};
+
+use criterion::{criterion_group, criterion_main, BenchmarkGroup, BenchmarkId, Criterion};
 use inc_exc::{
-    clauses::{map::MapClause, vec::VecClause},
-    counters::{float::FloatCounter, gmp::GmpCounter},
+    clauses::vec::VecClause,
+    counters::{bignum::BigCounter, gmp::GmpCounter},
     dnf::{Sign, DNF},
+    load::parse_dimacs,
     solve, Merge,
 };
 use rand::{thread_rng, Rng};
 
-const NUM_VARS: u32 = 100;
-const MIN_VARS: u32 = 20;
-const MAX_VARS: u32 = 200;
-const NUM_CLAUSES: u32 = 20;
-const MIN_CLAUSES: u32 = 10;
-const MAX_CLAUSES: u32 = 100;
+// fn gen_random_dnf<T: Merge>(
+//     num_vars: u16,
+//     num_clauses: u32,
+//     vars_per_clause: Option<usize>,
+// ) -> DNF<T> {
+//     let mut rng = thread_rng();
+//     let mut output = vec![];
+//     for _ in 0..num_clauses {
+//         let mut clause = vec![];
+//         for _ in 0..(vars_per_clause.unwrap_or(3)) {
+//             clause.push((
+//                 rng.gen_range(0..num_vars),
+//                 if rng.gen() {
+//                     Sign::Positive
+//                 } else {
+//                     Sign::Negative
+//                 },
+//             ))
+//         }
+//         output.push(clause)
+//     }
+//     T::from_vec(output)
+// }
 
-fn gen_random_dnf<T: Merge>(
-    num_vars: u32,
-    num_clauses: u32,
-    vars_per_clause: Option<usize>,
-) -> DNF<T> {
-    let mut rng = thread_rng();
-    let mut output = vec![];
-    for _ in 0..num_clauses {
-        let mut clause = vec![];
-        for _ in 0..(vars_per_clause.unwrap_or(3)) {
-            clause.push((
-                rng.gen_range(0..num_vars),
-                if rng.gen() {
-                    Sign::Positive
-                } else {
-                    Sign::Negative
-                },
-            ))
+// fn single_point(c: &mut Criterion) {
+//     let mut group = c.benchmark_group("Single Point");
+//     for (num_vars, num_clauses) in [
+//         (100, 10),
+//         (100, 60),
+//         (60, 6),
+//         (60, 36),
+//         (1000, 100),
+//         (1000, 600),
+//     ] {
+//         group.bench_with_input(
+//             BenchmarkId::new("VecClause", format!("{num_vars}, {num_clauses}, 3")),
+//             &gen_random_dnf::<VecClause>(num_vars, num_clauses, Some(3)),
+//             |b, dnf| {
+//                 b.iter(|| solve::<_, BigCounter>(dnf, num_vars as u32, num_clauses, 3));
+//             },
+//         );
+//     }
+//     group.finish();
+// }
+
+fn general_testing(c: &mut Criterion) {
+    let mut group = c.benchmark_group("ShaTar Testing");
+
+    let mut bench = |dir_name: &str, bench_name: &str| {
+        let mut files = fs::read_dir("../ShaTar Testing/".to_string() + dir_name)
+            .unwrap()
+            .map(|entry| entry.unwrap())
+            .collect::<Vec<DirEntry>>();
+        // deterministic
+        files.sort_by(|a, b| b.path().cmp(&a.path()));
+        for file in files {
+            // blacklist for testing purposes
+            if file.file_name().to_str().unwrap().contains("30v") {
+            // if vec!["30v"].contains(&file.file_name().to_str().unwrap()) {
+                continue;
+            }
+
+            group
+                .bench_with_input(
+                    BenchmarkId::new(bench_name, format!("{}", file.path().to_string_lossy())),
+                    &parse_dimacs::<VecClause>(&{
+                        let file = &file.path();
+                        fs::read_to_string(file)
+                            .expect(&format!("Failed to open file {}", file.to_string_lossy()))
+                    })
+                    .expect("invalid DIMACS in sample input")
+                    .1,
+                    |b, (dnf, num_vars, num_clauses)| {
+                        b.iter(|| solve::<_, BigCounter>(dnf, *num_vars, *num_clauses, 999));
+                    },
+                )
+                .sample_size(10);
         }
-        output.push(clause)
-    }
-    T::from_vec(output)
-}
+    };
+    bench("factoring test cases", "Factoring");
+    bench("pigeonhole test cases", "Pigeonhole");
+    bench("random test cases", "Random");
+    bench("toughsat test cases", "Toughsat");
 
-fn single_point(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Single Point");
-    group.bench_with_input(
-        BenchmarkId::new("VecClause", format!("{NUM_VARS}, {NUM_CLAUSES}, 3")),
-        &gen_random_dnf::<VecClause>(NUM_VARS, NUM_CLAUSES, Some(3)),
-        |b, dnf| {
-            b.iter(|| solve::<_, GmpCounter>(dnf, NUM_VARS, NUM_CLAUSES, 3));
-        },
-    );
-    group.bench_with_input(
-        BenchmarkId::new("MapClause", format!("{NUM_VARS}, {NUM_CLAUSES}, 3")),
-        &gen_random_dnf::<MapClause>(NUM_VARS, NUM_CLAUSES, Some(3)),
-        |b, dnf| {
-            b.iter(|| solve::<_, GmpCounter>(dnf, NUM_VARS, NUM_CLAUSES, 3));
-        },
-    );
     group.finish();
 }
 
-fn vary_var_number(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Varying variable number");
-    for num_vars in (MIN_VARS..MAX_VARS).step_by(((MAX_VARS - MIN_VARS) / 20) as usize) {
-        group.throughput(Throughput::Elements(num_vars as u64));
-        group.bench_with_input(
-            BenchmarkId::new("VecClause", format!("{num_vars}, {NUM_CLAUSES}, 3")),
-            &gen_random_dnf::<VecClause>(num_vars, NUM_CLAUSES, Some(3)),
-            |b, dnf| {
-                b.iter(|| solve::<_, GmpCounter>(dnf, num_vars, NUM_CLAUSES, 3));
-            },
-        );
-        group.bench_with_input(
-            BenchmarkId::new("MapClause", format!("{num_vars}, {NUM_CLAUSES}, 3")),
-            &gen_random_dnf::<MapClause>(num_vars, NUM_CLAUSES, Some(3)),
-            |b, dnf| {
-                b.iter(|| solve::<_, GmpCounter>(dnf, num_vars, NUM_CLAUSES, 3));
-            },
-        );
-    }
-    group.finish();
-}
-
-fn vary_clause_number(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Varying clause number");
-    for num_clauses in
-        (MIN_CLAUSES..MAX_CLAUSES).step_by(((MAX_CLAUSES - MIN_CLAUSES) / 20) as usize)
-    {
-        group.throughput(Throughput::Elements(num_clauses as u64));
-        group.bench_with_input(
-            BenchmarkId::new("VecClause", format!("{NUM_VARS}, {num_clauses}, 3")),
-            &gen_random_dnf::<VecClause>(NUM_VARS, num_clauses, Some(3)),
-            |b, dnf| {
-                b.iter(|| solve::<_, FloatCounter>(dnf, NUM_VARS, num_clauses, 3));
-            },
-        );
-        group.bench_with_input(
-            BenchmarkId::new("MapClause", format!("{NUM_VARS}, {num_clauses}, 3")),
-            &gen_random_dnf::<MapClause>(NUM_VARS, num_clauses, Some(3)),
-            |b, dnf| {
-                b.iter(|| solve::<_, FloatCounter>(dnf, NUM_VARS, num_clauses, 3));
-            },
-        );
-    }
-    group.finish();
-}
-
-criterion_group!(benches, single_point, vary_var_number, vary_clause_number);
+criterion_group!(benches, general_testing);
 criterion_main!(benches);
