@@ -19,7 +19,7 @@ pub fn solve<Clause: Merge, Count: Counter>(
     // generic over multiple implementation for counting (should be zero cost: monomorphization)
     let mut sum: Count = Count::new(num_vars);
 
-    let mut current_generation: Vec<(usize, Clause)> = vec![(0, Clause::new_empty())];
+    let mut current_generation: Vec<(usize, Clause)> = vec![(0, Clause::default())];
     let mut next_generation: Vec<(usize, Clause)>;
 
     for combo_size in 0..max_size {

@@ -5,7 +5,7 @@ use std::{
 
 use criterion::{criterion_group, criterion_main, BenchmarkGroup, BenchmarkId, Criterion};
 use inc_exc::{
-    clauses::vec::VecClause,
+    clauses::{vec::VecClause, bit::BitClause},
     counters::{bignum::BigCounter, gmp::GmpCounter},
     dnf::{Sign, DNF},
     load::parse_dimacs,

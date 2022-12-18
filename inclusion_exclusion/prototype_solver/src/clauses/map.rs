@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
-pub struct MapClause(HashMap<u16, Sign>);
+pub struct MapClause(HashMap<u32, Sign>);
 
 impl Default for MapClause {
     fn default() -> Self {
@@ -27,19 +27,15 @@ impl Merge for MapClause {
         MergeResult::Set(a)
     }
 
-    fn from_vec(vec: Vec<Vec<(u16, Sign)>>) -> DNF<Self> {
+    fn from_vec(vec: Vec<Vec<(u32, Sign)>>) -> DNF<Self> {
         DNF::from(
             vec.iter()
-                .map(|e| MapClause(e.iter().cloned().collect::<HashMap<u16, Sign>>()))
+                .map(|e| MapClause(e.iter().cloned().collect::<HashMap<u32, Sign>>()))
                 .collect::<Vec<MapClause>>(),
         )
     }
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    fn new_empty() -> Self {
-        Self(HashMap::new())
     }
 }
