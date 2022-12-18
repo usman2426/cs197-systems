@@ -5,7 +5,7 @@ use std::{
 
 use criterion::{criterion_group, criterion_main, BenchmarkGroup, BenchmarkId, Criterion};
 use inc_exc::{
-    clauses::{vec::VecClause, bit::BitClause},
+    clauses::{vec::VecClause, compressed::BitClause, vec_bit::AdaClause},
     counters::{bignum::BigCounter, gmp::GmpCounter},
     dnf::{Sign, DNF},
     load::parse_dimacs,
@@ -78,7 +78,7 @@ fn general_testing(c: &mut Criterion) {
             group
                 .bench_with_input(
                     BenchmarkId::new(bench_name, format!("{}", file.path().to_string_lossy())),
-                    &parse_dimacs::<VecClause>(&{
+                    &parse_dimacs::<AdaClause>(&{
                         let file = &file.path();
                         fs::read_to_string(file)
                             .expect(&format!("Failed to open file {}", file.to_string_lossy()))

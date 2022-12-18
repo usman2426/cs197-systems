@@ -86,3 +86,10 @@ impl From<Vec<(u32, Sign)>> for VecClause {
         VecClause(value)
     }
 }
+
+impl VecClause {
+    // to convert into bit.rs
+    pub(crate) fn into_vec(self) -> Vec<(u32, Sign)> {
+        self.0
+    }
+}

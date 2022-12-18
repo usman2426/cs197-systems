@@ -2,9 +2,10 @@ use std::fmt::Debug;
 
 use crate::dnf::{Sign, DNF};
 
-pub mod bit;
+pub mod compressed;
 pub mod map;
 pub mod vec;
+pub mod bit;
 pub mod vec_bit;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
