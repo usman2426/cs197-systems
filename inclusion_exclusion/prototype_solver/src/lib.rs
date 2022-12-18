@@ -30,7 +30,7 @@ pub fn solve<Clause: Merge, Count: Counter>(
         while let Some((last_index, merge_result)) = current_generation.pop() {
             for new_index in last_index..(num_clauses as usize) {
                 if let MergeResult::Set(new_merge_result) =
-                    Clause::merge(merge_result.clone(), &dnf[new_index])
+                    Clause::merge(merge_result.clone(), &dnf[new_index], num_vars)
                 {
                     // new_index + 1 is the starting point for the combos now
                     next_generation.push((new_index + 1, new_merge_result));

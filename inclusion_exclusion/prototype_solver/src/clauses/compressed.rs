@@ -17,7 +17,7 @@ pub struct BitClause {
 }
 
 impl Merge for BitClause {
-    fn merge(a: Self, b: &Self) -> MergeResult<Self> {
+    fn merge(a: Self, b: &Self, _total_size_hint: u32) -> MergeResult<Self> {
         // the signs for the intersection of literals must agree
         // in other words, (S1 ^ S2) & L1 & L2 must be empty
         // because S1 ^ S2 will only have 1's where the "sign" differed

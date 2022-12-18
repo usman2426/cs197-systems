@@ -18,7 +18,7 @@ impl Default for MapClause {
 }
 
 impl Merge for MapClause {
-    fn merge(mut a: MapClause, b: &MapClause) -> MergeResult<MapClause> {
+    fn merge(mut a: MapClause, b: &MapClause, _total_size_hint: u32) -> MergeResult<MapClause> {
         for (literal, sign) in &b.0 {
             if a.0.insert(*literal, *sign) == Some(!*sign) {
                 return MergeResult::Incompatible;

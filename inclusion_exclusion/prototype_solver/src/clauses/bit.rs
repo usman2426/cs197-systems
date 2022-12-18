@@ -5,8 +5,6 @@ use crate::{
     Merge, MergeResult,
 };
 
-use super::vec::VecClause;
-
 /// must always be sorted
 #[derive(Clone, Debug, Default)]
 pub struct BitClause {
@@ -15,7 +13,7 @@ pub struct BitClause {
 }
 
 impl Merge for BitClause {
-    fn merge(a: Self, b: &Self) -> MergeResult<Self> {
+    fn merge(a: Self, b: &Self, _total_size_hint: u32) -> MergeResult<Self> {
         let mut conflicts = a.signs.clone();
         conflicts.symmetric_difference_with(&b.signs);
         conflicts.intersect_with(&a.literals);

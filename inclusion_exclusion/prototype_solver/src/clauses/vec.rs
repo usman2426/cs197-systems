@@ -17,7 +17,7 @@ impl Default for VecClause {
 }
 
 impl Merge for VecClause {
-    fn merge(a: VecClause, b: &VecClause) -> MergeResult<VecClause> {
+    fn merge(a: VecClause, b: &VecClause, _total_size_hint: u32) -> MergeResult<VecClause> {
         let mut a = a.0.iter();
         let mut b = b.0.iter();
 

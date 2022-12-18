@@ -19,7 +19,7 @@ pub trait Merge
 where
     Self: Sized + Clone + Default + Debug,
 {
-    fn merge(a: Self, b: &Self) -> MergeResult<Self>;
+    fn merge(a: Self, b: &Self, _total_size_hint: u32) -> MergeResult<Self>;
     fn from_vec(vec: Vec<Vec<(u32, Sign)>>) -> DNF<Self>;
     fn len(&self) -> usize;
 }
