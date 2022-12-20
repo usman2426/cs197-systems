@@ -24,18 +24,18 @@ use std::{
 };
 
 use inc_exc::{
-    clauses::vec::VecClause, counters::bignum::BigCounter, load::parse_dimacs, solve,
+    clauses::vec_bit::AdaClause, counters::bignum::BigCounter, load::parse_dimacs, solve,
     SolutionResult,
 };
 
 fn main() {
     let check_file = |file: DirEntry, expected_result: SolutionResult| {
         // filter
-        // if !file.file_name().to_string_lossy().contains("b.cnf") {
-        //     return;
-        // }
+        if !file.file_name().to_string_lossy().contains("p-4.cnf") {
+            return;
+        }
         println!("===== {} =====", file.file_name().to_string_lossy());
-        let (dnf, num_vars, num_clauses) = parse_dimacs::<VecClause>(&{
+        let (dnf, num_vars, num_clauses) = parse_dimacs::<AdaClause>(&{
             let file = &file.path();
             fs::read_to_string(file)
                 .expect(&format!("Failed to open file {}", file.to_string_lossy()))
@@ -44,7 +44,7 @@ fn main() {
         .1;
 
         let start = Instant::now();
-        let (result, _, _) = solve::<_, BigCounter>(&dnf, num_vars, num_clauses, 3);
+        let (result, _, _) = solve::<_, BigCounter>(&dnf, num_vars, num_clauses, 9);
         let duration = start.elapsed();
         if result != expected_result {
             eprintln!(

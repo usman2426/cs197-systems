@@ -2,7 +2,7 @@
 //! memory usage of a VecClause is n*(32+8) where n is the number of literals in a clause
 //! memory usage of a plain BitSet is 2*(N/32) for the two bitsets. one for the sign and one for the literals where N is the total num of literals
 //! merging VecClause takes O(n+m)
-//! merging a bit based clause takes O(N)
+//! merging a bit based clause takes O(n)
 //! makes sense memory-wise to switch when n*(32+8) > 2*(N/32) or equivalently n > N / 16 / 40 or n > N / 640
 
 use crate::{

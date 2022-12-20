@@ -1,17 +1,9 @@
-use std::{
-    fs::{self, DirEntry},
-    time::Instant,
-};
+use std::fs::{self, DirEntry};
 
-use criterion::{criterion_group, criterion_main, BenchmarkGroup, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use inc_exc::{
-    clauses::{vec::VecClause, compressed::BitClause, vec_bit::AdaClause},
-    counters::{bignum::BigCounter, gmp::GmpCounter},
-    dnf::{Sign, DNF},
-    load::parse_dimacs,
-    solve, Merge,
+    clauses::bit::BitClause, counters::bignum::BigCounter, load::parse_dimacs, solve,
 };
-use rand::{thread_rng, Rng};
 
 // fn gen_random_dnf<T: Merge>(
 //     num_vars: u16,
@@ -71,14 +63,14 @@ fn general_testing(c: &mut Criterion) {
         for file in files {
             // blacklist for testing purposes
             if file.file_name().to_str().unwrap().contains("30v") {
-            // if vec!["30v"].contains(&file.file_name().to_str().unwrap()) {
+                // if vec!["30v"].contains(&file.file_name().to_str().unwrap()) {
                 continue;
             }
 
             group
                 .bench_with_input(
                     BenchmarkId::new(bench_name, format!("{}", file.path().to_string_lossy())),
-                    &parse_dimacs::<AdaClause>(&{
+                    &parse_dimacs::<BitClause>(&{
                         let file = &file.path();
                         fs::read_to_string(file)
                             .expect(&format!("Failed to open file {}", file.to_string_lossy()))
